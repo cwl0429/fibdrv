@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "kdev_t.h": "c",
+        "fs.h": "c",
+        "module.h": "c",
+        "device.h": "c",
+        "init.h": "c",
+        "errseq.h": "c",
+        "cdev.h": "c"
+    }
+}

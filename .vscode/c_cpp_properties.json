@@ -1,0 +1,25 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/lib/modules/5.13.0-35-generic/build/arch/x86/include",
+                "/lib/modules/5.13.0-35-generic/build/arch/x86/include/generated",
+                "/lib/modules/5.13.0-35-generic/build/include",
+                "/lib/modules/5.13.0-35-generic/build/include/generated",
+                "/usr/src/linux-hwe-5.13-headers-5.13.0-28/include/uapi/linux",
+                "/usr/src/linux-hwe-5.13-headers-5.13.0-35/include/uapi"
+            ],
+            "defines": [
+                "MODULE",
+                "__KERNEL__"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}
