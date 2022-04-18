@@ -4,12 +4,12 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/lib/modules/5.13.0-35-generic/build/arch/x86/include",
-                "/lib/modules/5.13.0-35-generic/build/arch/x86/include/generated",
-                "/lib/modules/5.13.0-35-generic/build/include",
-                "/lib/modules/5.13.0-35-generic/build/include/generated",
-                "/usr/src/linux-hwe-5.13-headers-5.13.0-28/include/uapi/linux",
-                "/usr/src/linux-hwe-5.13-headers-5.13.0-35/include/uapi"
+                // "/lib/modules/5.13.0-35-generic/build/arch/x86/include",
+                // "/lib/modules/5.13.0-35-generic/build/arch/x86/include/generated",
+                // "/lib/modules/5.13.0-35-generic/build/include",
+                // "/lib/modules/5.13.0-35-generic/build/include/generated",
+                "/usr/src/linux-hwe-5.13-headers-5.13.0-37/include",
+                "/usr/src/linux-hwe-5.13-headers-5.13.0-37/arch/x86/include"
             ],
             "defines": [
                 "MODULE",

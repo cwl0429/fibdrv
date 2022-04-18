@@ -6,7 +6,10 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
+#include <linux/types.h>
 
+//#include "bignum.h"
+#include "bignum.c"
 #include "xs.h"
 
 MODULE_LICENSE("Dual MIT/GPL");
@@ -35,116 +38,103 @@ static DEFINE_MUTEX(fib_mutex);
         *__c ^= *__d;        \
     } while (0)
 
-static void __swap(void *a, void *b, size_t size)
-{
-    if (a == b)
-        return;
+// static void __swap(void *a, void *b, size_t size)
+// {
+//     if (a == b)
+//         return;
 
-    switch (size) {
-    case 1:
-        XOR_SWAP(a, b, char);
-        break;
-    case 2:
-        XOR_SWAP(a, b, short);
-        break;
-    case 4:
-        XOR_SWAP(a, b, unsigned int);
-        break;
-    case 8:
-        XOR_SWAP(a, b, unsigned long);
-        break;
-    default:
-        /* Do nothing */
-        break;
-    }
-}
+//     switch (size) {
+//     case 1:
+//         XOR_SWAP(a, b, char);
+//         break;
+//     case 2:
+//         XOR_SWAP(a, b, short);
+//         break;
+//     case 4:
+//         XOR_SWAP(a, b, unsigned int);
+//         break;
+//     case 8:
+//         XOR_SWAP(a, b, unsigned long);
+//         break;
+//     default:
+//         /* Do nothing */
+//         break;
+//     }
+// }
 
-static void reverse_str(char *str, size_t n)
-{
-    for (int i = 0; i < (n >> 1); i++)
-        __swap(&str[i], &str[n - i - 1], sizeof(char));
-}
+// static void reverse_str(char *str, size_t n)
+// {
+//     for (int i = 0; i < (n >> 1); i++)
+//         __swap(&str[i], &str[n - i - 1], sizeof(char));
+// }
 
-static void string_number_add(xs *a, xs *b, xs *out)
-{
-    char *data_a, *data_b;
-    size_t size_a, size_b;
-    int i, carry = 0;
-    int sum;
+// static void string_number_add(xs *a, xs *b, xs *out)
+// {
+//     char *data_a, *data_b;
+//     size_t size_a, size_b;
+//     int i, carry = 0;
+//     int sum;
 
-    /*
-     * Make sure the string length of 'a' is always greater than
-     * the one of 'b'.
-     */
-    if (xs_size(a) < xs_size(b))
-        __swap((void *) &a, (void *) &b, sizeof(void *));
+//     /*
+//      * Make sure the string length of 'a' is always greater than
+//      * the one of 'b'.
+//      */
+//     if (xs_size(a) < xs_size(b))
+//         __swap((void *) &a, (void *) &b, sizeof(void *));
 
-    data_a = xs_data(a);
-    data_b = xs_data(b);
+//     data_a = xs_data(a);
+//     data_b = xs_data(b);
 
-    size_a = xs_size(a);
-    size_b = xs_size(b);
+//     size_a = xs_size(a);
+//     size_b = xs_size(b);
 
-    reverse_str(data_a, size_a);
-    reverse_str(data_b, size_b);
+//     reverse_str(data_a, size_a);
+//     reverse_str(data_b, size_b);
 
-    char *buf = kmalloc(sizeof(char) * (size_a + 2), GFP_KERNEL);
+//     char *buf = kmalloc(sizeof(char) * (size_a + 2), GFP_KERNEL);
 
-    for (i = 0; i < size_b; i++) {
-        sum = (data_a[i] - '0') + (data_b[i] - '0') + carry;
-        buf[i] = '0' + sum % 10;
-        carry = sum / 10;
-    }
+//     for (i = 0; i < size_b; i++) {
+//         sum = (data_a[i] - '0') + (data_b[i] - '0') + carry;
+//         buf[i] = '0' + sum % 10;
+//         carry = sum / 10;
+//     }
 
-    for (i = size_b; i < size_a; i++) {
-        sum = (data_a[i] - '0') + carry;
-        buf[i] = '0' + sum % 10;
-        carry = sum / 10;
-    }
+//     for (i = size_b; i < size_a; i++) {
+//         sum = (data_a[i] - '0') + carry;
+//         buf[i] = '0' + sum % 10;
+//         carry = sum / 10;
+//     }
 
-    if (carry)
-        buf[i++] = '0' + carry;
+//     if (carry)
+//         buf[i++] = '0' + carry;
 
-    buf[i] = 0;
+//     buf[i] = 0;
 
-    reverse_str(buf, i);
+//     reverse_str(buf, i);
 
-    /* Restore the original string */
-    reverse_str(data_a, size_a);
-    reverse_str(data_b, size_b);
+//     /* Restore the original string */
+//     reverse_str(data_a, size_a);
+//     reverse_str(data_b, size_b);
 
-    if (out)
-        *out = *xs_tmp(buf);
-}
+//     if (out)
+//         *out = *xs_tmp(buf);
+// }
 
 
-static int fib_sequence(long long k, char __user *buf)
-{
-    /* FIXME: C99 variable-length array (VLA) is not allowed in Linux kernel. */
-    // long long f[k + 2];
+// static long long fib_sequence(long long k)
+// {
 
-    xs *f = kmalloc(sizeof(xs) * (k + 2), GFP_KERNEL);
-    // xs f[k + 2];
+//     long long f[k + 2];
 
-    int i, n;
+//     f[0] = 0;
+//     f[1] = 1;
 
-    f[0] = *xs_tmp("0");
-    f[1] = *xs_tmp("1");
+//     for (int i = 2; i <= k; i++) {
+//         f[i] = f[i - 1] + f[i - 2];
+//     }
 
-    for (i = 2; i <= k; i++) {
-        string_number_add(&f[i - 1], &f[i - 2], &f[i]);
-    }
-
-    n = xs_size(&f[k]);
-    if (copy_to_user(buf, xs_data(&f[k]), n)) {
-        return -EFAULT;
-    }
-
-    for (i = 0; i <= k; i++)
-        xs_free(&f[i]);
-
-    return n;
-}
+//     return f[k];
+// }
 
 static int fib_open(struct inode *inode, struct file *file)
 {
@@ -167,7 +157,18 @@ static ssize_t fib_read(struct file *file,
                         size_t size,
                         loff_t *offset)
 {
-    return (ssize_t) fib_sequence(*offset, buf);
+    printk("read start");
+    BigN *f = alloc_BigN(1);
+    fib_BigN(f, *offset);
+    char *c = to_string_BigN(f);
+    ssize_t size_c = strlen(c);
+    if (copy_to_user(buf, c, size_c))
+        return -EFAULT;
+    kfree(c);
+    free_BigN(f);
+
+    printk("");
+    return (ssize_t) size_c;
 }
 
 /* write operation is skipped */

@@ -6,6 +6,19 @@
         "device.h": "c",
         "init.h": "c",
         "errseq.h": "c",
-        "cdev.h": "c"
+        "cdev.h": "c",
+        "bignum.h": "c",
+        "types.h": "c",
+        "stdint-gcc.h": "c",
+        "stdint.h": "c",
+        "kernel.h": "c",
+        "math.h": "c",
+        "string.h": "c",
+        "slab.h": "c",
+        "gfp.h": "c",
+        "mmdebug.h": "c",
+        "bug.h": "c",
+        "compiler.h": "c",
+        "compiler_types.h": "c"
     }
 }
