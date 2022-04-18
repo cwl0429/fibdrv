@@ -23,7 +23,6 @@ static inline BigN *alloc_BigN(size_t size)
         bn->sign = 0;
         if (bn->number) {
             memset(bn->number, 0, size);
-            printk("alloc BigN size = %d", size);
             return bn;
         }
     }

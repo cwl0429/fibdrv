@@ -8,9 +8,7 @@
 #include <linux/mutex.h>
 #include <linux/types.h>
 
-//#include "bignum.h"
 #include "bignum.c"
-#include "xs.h"
 
 MODULE_LICENSE("Dual MIT/GPL");
 MODULE_AUTHOR("National Cheng Kung University, Taiwan");
@@ -166,8 +164,6 @@ static ssize_t fib_read(struct file *file,
         return -EFAULT;
     kfree(c);
     free_BigN(f);
-
-    printk("");
     return (ssize_t) size_c;
 }
 
