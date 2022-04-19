@@ -61,11 +61,22 @@ static ssize_t fib_read(struct file *file,
     BigN *f = alloc_BigN(1);
     fib_BigN(f, *offset);
     char *c = to_string_BigN(f);
+    free_BigN(f);
     ssize_t size_c = strlen(c);
     if (copy_to_user(buf, c, size_c))
         return -EFAULT;
     kfree(c);
-    free_BigN(f);
+    /* test mul */
+    BigN *a = alloc_BigN(1);
+    BigN *b = alloc_BigN(1);
+    BigN *tmp = alloc_BigN(1);
+    a->number[0] = 0x80000000;
+    b->number[0] = 0xffffffff;
+    mul_BigN(a, b, tmp);
+    printk("mul result = %s", to_string_BigN(tmp));
+    free_BigN(a);
+    free_BigN(b);
+
     return (ssize_t) size_c;
 }
 

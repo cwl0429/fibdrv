@@ -24,6 +24,12 @@ static inline char *to_string_BigN(BigN *a);
 /* |c| = |a| + |b| */
 static inline void add_BigN(BigN *a, BigN *b, BigN *c);
 
+/* |c| = |a| * |b| */
+static inline void mul_BigN(BigN *a, BigN *b, BigN *c);
+
+/* bitwise Left Shift BigN a->number by a constant bits (1~31) */
+static inline void shl_BigN(BigN *a, const int bits);
+
 /* copy a into b */
 static inline void cpy_BigN(BigN *a, BigN *b);
 

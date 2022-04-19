@@ -78,6 +78,48 @@ static inline void add_BigN(BigN *a, BigN *b, BigN *c)
         resize_BigN(c, c->size - 1);
 }
 
+static inline void mul_BigN(BigN *a, BigN *b, BigN *c)
+{
+    printk("\nstart mul");
+    resize_BigN(c, a->size + b->size);
+    BigN *a_tmp = alloc_BigN(1);
+    cpy_BigN(a, a_tmp);
+    for (int i = 0; i < b->size; i++) {
+        printk("i = %d", i);
+        for (unsigned int d = 1U; d; d <<= 1) {
+            printk("d = %ud, before string c = %s", d, to_string_BigN(c));
+            if (!!(d & b->number[i])) {
+                printk("enter add");
+                add_BigN(c, a_tmp, c);
+            }
+            shl_BigN(a_tmp, 1);
+            printk("d = %ud, after string c = %s", d, to_string_BigN(c));
+        }
+    }
+
+
+    int c_size = 0;
+    for (c_size = c->size - 1; !c->number[c_size];)
+        c_size--;
+    if (c->size > 1)
+        resize_BigN(c, c_size + 1);
+    printk("BigN c = %s", to_string_BigN(c));
+}
+
+static inline void shl_BigN(BigN *a, const int bits)
+{
+    resize_BigN(a, a->size + 1);
+    for (int j = 0; j < bits; j++) {
+        for (int i = a->size - 2; i >= 0; i--) {
+            if (!!(a->number[i] & 0x80000000))
+                a->number[i + 1] += 1;
+            a->number[i] <<= 1;
+        }
+    }
+    if (!a->number[a->size - 1] && a->size > 1)
+        resize_BigN(a, a->size - 1);
+}
+
 static inline void resize_BigN(BigN *a, size_t size)
 {
     if (a->size == size)
@@ -132,13 +174,9 @@ static inline void fib_BigN(BigN *dest, int fn)
     b->number[0] = 1;
 
     for (int i = 2; i <= fn; i++) {
-        // printk("\n%d times", i);
         add_BigN(a, b, dest);
         cpy_BigN(dest, a);
         swap_BigN(a, b);
-        // printk("a number = %s", to_string_BigN(a));
-        // printk("b number = %s", to_string_BigN(b));
-        // printk("dest number = %s", to_string_BigN(dest));
     }
 
     free_BigN(a);

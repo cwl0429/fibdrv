@@ -13,7 +13,7 @@ int main()
 
     char buf[256];
     char write_buf[] = "testing writing";
-    int offset = 100; /* TODO: try test something bigger than the limit */
+    int offset = 1; /* TODO: try test something bigger than the limit */
 
     int fd = open(FIB_DEV, O_RDWR);
     if (fd < 0) {
@@ -45,13 +45,13 @@ int main()
                "%s.\n",
                i, buf);
     }
-    // lseek(fd, 50, SEEK_SET);
+    // lseek(fd, 1, SEEK_SET);
     // sz = read(fd, buf, sizeof(buf));
     // buf[sz] = 0;
     // printf("Reading from " FIB_DEV
     //            " at offset %d, returned the sequence "
     //            "%s.\n",
-    //            50, buf);
+    //            1, buf);
     close(fd);
     return 0;
 }
