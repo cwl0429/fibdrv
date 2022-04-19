@@ -49,14 +49,12 @@ static inline char *to_string_BigN(BigN *a)
                     c[j] -= 10;
             }
         }
-        printk("i = %d, string = %s", i, c);
     }
     while (*p == '0' && *(p + 1) != '\0')
         p++;
     if (a->sign)
         *(--p) = '-';
     memmove(c, p, strlen(p) + 1);
-    printk("string %s", c);
     return c;
 }
 
@@ -64,22 +62,18 @@ static inline char *to_string_BigN(BigN *a)
 
 static inline void add_BigN(BigN *a, BigN *b, BigN *c)
 {
-    printk("start add");
-    if (a->size < b->size)
-        swap_BigN(a, b);
     resize_BigN(c, a->size + 1);
     unsigned int carry = 0;
     for (int i = 0; i < c->size; i++) {
-        printk("loop %ud", i);
         unsigned int tmp_a = (i < a->size) ? a->number[i] : 0;
         unsigned int tmp_b = (i < b->size) ? b->number[i] : 0;
-        printk("%ud %ud", tmp_a, tmp_b);
+        // printk("tmp_a = %ud, tmp_b = %ud", tmp_a, tmp_b);
         c->number[i] = tmp_a + tmp_b + carry;
-        printk("loop %ud done sum = %ud", i, c->number[i]);
+        // printk("loop %ud done sum = %ud", i, c->number[i]);
         carry = DETECT_OVERFLOW(tmp_a, tmp_b);
     }
-    for (int i = 0; i < c->size; i++)
-        printk("%x", c->number[i]);
+    // for (int i = 0; i < c->size; i++)
+    //     printk("number %d = %x", i, c->number[i]);
     if (!c->number[c->size - 1] && c->size > 1)
         resize_BigN(c, c->size - 1);
 }
@@ -138,13 +132,15 @@ static inline void fib_BigN(BigN *dest, int fn)
     b->number[0] = 1;
 
     for (int i = 2; i <= fn; i++) {
-        printk("%d times", i);
+        // printk("\n%d times", i);
         add_BigN(a, b, dest);
         cpy_BigN(dest, a);
         swap_BigN(a, b);
+        // printk("a number = %s", to_string_BigN(a));
+        // printk("b number = %s", to_string_BigN(b));
+        // printk("dest number = %s", to_string_BigN(dest));
     }
-    printk("dest number = %ud", dest->number[0]);
-    printk("dest number = %ud", dest->number[1]);
+
     free_BigN(a);
     free_BigN(b);
 }
