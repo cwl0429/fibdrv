@@ -19,6 +19,7 @@
         "mmdebug.h": "c",
         "bug.h": "c",
         "compiler.h": "c",
-        "compiler_types.h": "c"
+        "compiler_types.h": "c",
+        "int-ll64.h": "c"
     }
 }
