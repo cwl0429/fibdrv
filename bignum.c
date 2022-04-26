@@ -112,6 +112,7 @@ static inline void mul_BigN(BigN *a, BigN *b, BigN *c)
         if (!b->number[i])
             continue;
         unsigned int clz = __fls(b->number[i]) + 1;
+        unsigned int shift_cnt = 32 - clz;
         for (unsigned int d = 1U; clz; d <<= 1) {
             if (!!(d & b->number[i])) {
                 // printk("mul string C = %s, string a_tmp =
@@ -124,7 +125,8 @@ static inline void mul_BigN(BigN *a, BigN *b, BigN *c)
             shl_BigN(a_tmp, 1);
             clz--;
         }
-        printk("cnt = %d", cnt);
+        shl_BigN(a_tmp, shift_cnt);
+        // printk("cnt = %d", cnt);
     }
     int c_size = 0;
     for (c_size = c->size - 1; !c->number[c_size];)
@@ -230,36 +232,26 @@ static inline void fib_fast_BigN(BigN *dest, const int fn)
     int fn_fls = __fls(fn);
     for (unsigned int d = 1U << fn_fls; d > 0; d >>= 1) {
         /* F(2k) */
-        // printk("\ninit string a = %s, string b = %s, string c =
-        // %s",to_string_BigN(a), to_string_BigN(b), to_string_BigN(dest));
         cpy_BigN(b, dest);
         shl_BigN(dest, 1);
-        // printk("f(2k) string a = %s, string b = %s, string c =
-        // %s",to_string_BigN(a), to_string_BigN(b), to_string_BigN(dest));
         sub_BigN(dest, a, dest);
-        // printk("f(2k) string a = %s, string b = %s, string c =
-        // %s",to_string_BigN(a), to_string_BigN(b), to_string_BigN(dest));
         mul_BigN(dest, a, dest);
-        // printk("f(2k) string a = %s, string b = %s, string c =
-        // %s",to_string_BigN(a), to_string_BigN(b), to_string_BigN(dest));
         /* F(2k + 1) */
         mul_BigN(a, a, tmp);
         mul_BigN(b, b, a);
         add_BigN(a, tmp, tmp);
-        // printk("f(2k+1) string a = %s, string b = %s, string c =
-        // %s",to_string_BigN(a), to_string_BigN(b), to_string_BigN(dest));
+
         cpy_BigN(dest, a);
         cpy_BigN(tmp, b);
-        // printk("cpy string a = %s, string b = %s, string c =
-        // %s",to_string_BigN(a), to_string_BigN(b), to_string_BigN(dest));
+
         if (!!(d & fn)) {
             add_BigN(a, b, a);
             swap_BigN(a, b);
             cpy_BigN(a, dest);
-            // printk("bit 1 string a = %s, string b = %s, string c =
+            // printk("bit 1 string a = %s, string b = %s, string dest =
             // %s",to_string_BigN(a), to_string_BigN(b), to_string_BigN(dest));
         }
-        printk("string dest = %s", to_string_BigN(dest));
+        // printk("string dest = %s", to_string_BigN(dest));
     }
     free_BigN(a);
     free_BigN(b);

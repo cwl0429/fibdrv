@@ -20,7 +20,7 @@ MODULE_VERSION("0.1");
 /* MAX_LENGTH is set to 92 because
  * ssize_t can't fit the number > 92
  */
-#define MAX_LENGTH 100
+#define MAX_LENGTH 1000
 
 static dev_t fib_dev = 0;
 static struct cdev *fib_cdev;
@@ -57,11 +57,9 @@ static ssize_t fib_read(struct file *file,
                         size_t size,
                         loff_t *offset)
 {
-    // printk("\n\nread start");
     BigN *f = alloc_BigN(1);
     // fib_BigN(f, *offset);
     fib_fast_BigN(f, *offset);
-    // printk("string dest = %s", to_string_BigN(f));
     char *c = to_string_BigN(f);
     free_BigN(f);
     ssize_t size_c = strlen(c);
