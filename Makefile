@@ -11,7 +11,7 @@ GIT_HOOKS := .git/hooks/applied
 
 $(TARGET_MODULE)-objs := fibdrv_core.o bignum.o
 
-all: $(GIT_HOOKS) client
+all: $(GIT_HOOKS) client performance
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
 
 $(GIT_HOOKS):
@@ -20,13 +20,16 @@ $(GIT_HOOKS):
 
 clean:
 	$(MAKE) -C $(KDIR) M=$(PWD) clean
-	$(RM) client out
+	$(RM) client out performance perf
 load:
 	sudo insmod $(TARGET_MODULE).ko
 unload:
 	sudo rmmod $(TARGET_MODULE) || true >/dev/null
 
 client: client.c
+	$(CC) -o $@ $^
+
+performance: performance.c
 	$(CC) -o $@ $^
 
 PRINTF = env printf
@@ -46,4 +49,10 @@ test: all
 	$(MAKE) unload
 	$(MAKE) load
 	sudo ./client > out
+	$(MAKE) unload
+
+perf: all
+	$(MAKE) unload
+	$(MAKE) load
+	sudo ./performance > perf
 	$(MAKE) unload

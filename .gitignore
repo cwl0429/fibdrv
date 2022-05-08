@@ -26,6 +26,10 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+# pictures
+*.png
+*.jpg
+
 # test-oriented
 client
 out

@@ -13,9 +13,9 @@
 */
 
 
-static inline BigN *alloc_BigN(size_t size)
+static inline bign *bign_alloc(size_t size)
 {
-    BigN *bn = kmalloc(sizeof(BigN), GFP_KERNEL);
+    bign *bn = kmalloc(sizeof(bign), GFP_KERNEL);
     if (bn) {
         bn->number = kmalloc(sizeof(int) * size, GFP_KERNEL);
         bn->size = size;
@@ -28,7 +28,7 @@ static inline BigN *alloc_BigN(size_t size)
     return NULL;
 }
 
-static inline char *to_string_BigN(BigN *a)
+static inline char *bign_to_string(bign *a)
 {
     /* change of base formula: log10(x) = log2(x) / log2(10) */
     size_t len = (8 * sizeof(int) * a->size) / 3 + 2;
@@ -57,9 +57,9 @@ static inline char *to_string_BigN(BigN *a)
     return c;
 }
 
-static inline void add_BigN(BigN *a, BigN *b, BigN *c)
+static inline void bign_add(bign *a, bign *b, bign *c)
 {
-    resize_BigN(c, a->size + 1);
+    bign_resize(c, a->size + 1);
     unsigned int carry = 0;
     for (int i = 0; i < c->size; i++) {
         unsigned int tmp_a = (i < a->size) ? a->number[i] : 0;
@@ -68,12 +68,12 @@ static inline void add_BigN(BigN *a, BigN *b, BigN *c)
         carry = DETECT_OVERFLOW(tmp_a, tmp_b + carry);
     }
     if (!c->number[c->size - 1] && c->size > 1)
-        resize_BigN(c, c->size - 1);
+        bign_resize(c, c->size - 1);
 }
 
-static inline void sub_BigN(BigN *a, BigN *b, BigN *c)
+static inline void bign_sub(bign *a, bign *b, bign *c)
 {
-    resize_BigN(c, a->size);
+    bign_resize(c, a->size);
     unsigned int carry = 0;
     for (int i = 0; i < c->size; i++) {
         long tmp_a = (i < a->size) ? (long) a->number[i] : 0;
@@ -82,32 +82,28 @@ static inline void sub_BigN(BigN *a, BigN *b, BigN *c)
         carry = DETECT_OVERFLOW_SUB(tmp_a - carry, tmp_b);
     }
     if (!c->number[c->size - 1] && c->size > 1)
-        resize_BigN(c, c->size - 1);
-    // for (int i = 0; i < c->size; i++)
-    //     printk("number %d = %x", i, c->number[i]);
+        bign_resize(c, c->size - 1);
 }
 
-static inline void mul_BigN(BigN *a, BigN *b, BigN *c)
+static inline void bign_mul(bign *a, bign *b, bign *c)
 {
-    // printk("enter mul");
-    BigN *a_tmp = alloc_BigN(1);
-    cpy_BigN(a, a_tmp);
+    bign *a_tmp = bign_alloc(1);
+    bign_cpy(a, a_tmp);
 
     if ((!a->number[0] && (a->size == 1)) ||
         (!b->number[0] && (b->size == 1))) {
         /* prevent a == c or b == c */
-        resize_BigN(c, 1);
+        bign_resize(c, 1);
         c->number[0] = 0;
         // printk("0 appear");
         return;
     }
 
-    resize_BigN(c, 1);
+    bign_resize(c, 1);
     c->number[0] = 0;
 
     /* then resize to limit range of a * b */
-    resize_BigN(c, a->size + b->size);
-    int cnt = 0;
+    bign_resize(c, a->size + b->size);
     for (int i = 0; i < b->size; i++) {
         if (!b->number[i])
             continue;
@@ -115,43 +111,41 @@ static inline void mul_BigN(BigN *a, BigN *b, BigN *c)
         unsigned int shift_cnt = 32 - clz;
         for (unsigned int d = 1U; clz; d <<= 1) {
             if (!!(d & b->number[i])) {
-                // printk("mul string C = %s, string a_tmp =
-                // %s",to_string_BigN(c), to_string_BigN(a_tmp));
-                add_BigN(c, a_tmp, c);
-                // printk("string c = %s",to_string_BigN(c));
+                bign_add(c, a_tmp, c);
             }
-            // printk("cnt = %d, d = %u, clz = %u, i = %d, b->size = %d", cnt,
-            // d, clz, i, b->size);
-            shl_BigN(a_tmp, 1);
+            bign_shl(a_tmp, 1);
             clz--;
         }
-        shl_BigN(a_tmp, shift_cnt);
-        // printk("cnt = %d", cnt);
+        bign_shl(a_tmp, shift_cnt);
     }
     int c_size = 0;
     for (c_size = c->size - 1; !c->number[c_size];)
         c_size--;
     if (c->size > 1)
-        resize_BigN(c, c_size + 1);
+        bign_resize(c, c_size + 1);
 }
 
-static inline void shl_BigN(BigN *a, const int bits)
+static inline void bign_shl(bign *a, const int bits)
 {
-    resize_BigN(a, a->size + 1);
-    for (int j = 0; j < bits; j++) {
-        for (int i = a->size - 2; i >= 0; i--) {
-            if (!a->number[i])
-                continue;
-            if (!!(a->number[i] & 0x80000000))
-                a->number[i + 1] += 1;
-            a->number[i] <<= 1;
-        }
-    }
-    if (!a->number[a->size - 1] && a->size > 1)
-        resize_BigN(a, a->size - 1);
+    if (__builtin_clz(a->number[(a->size) - 1]) < bits)
+        bign_resize(a, a->size + 1);
+    // for (int j = 0; j < bits; j++) {
+    //     for (int i = a->size - 2; i >= 0; i--) {
+    //         if (!a->number[i])
+    //             continue;
+    //         if (!!(a->number[i] & 0x80000000))
+    //             a->number[i + 1] += 1;
+    //         a->number[i] <<= 1;
+    //     }
+    // }
+    // if (!a->number[a->size - 1] && a->size > 1)
+    //     bign_resize(a, a->size - 1);
+    for (int i = a->size - 1; i > 0; i--)
+        a->number[i] = a->number[i] << bits | a->number[i - 1] >> (32 - bits);
+    a->number[0] <<= bits;
 }
 
-static inline void resize_BigN(BigN *a, size_t size)
+static inline void bign_resize(bign *a, size_t size)
 {
     if (a->size == size)
         return;
@@ -164,22 +158,22 @@ static inline void resize_BigN(BigN *a, size_t size)
     a->size = size;
 }
 
-static inline void cpy_BigN(BigN *a, BigN *b)
+static inline void bign_cpy(bign *a, bign *b)
 {
     if (a->size > b->size)
-        resize_BigN(b, a->size);
+        bign_resize(b, a->size);
     memcpy(b->number, a->number, a->size * sizeof(int));
     b->sign = a->sign;
 }
 
-static inline void swap_BigN(BigN *a, BigN *b)
+static inline void bign_swap(bign *a, bign *b)
 {
-    BigN tmp = *a;
+    bign tmp = *a;
     *a = *b;
     *b = tmp;
 }
 
-static inline void free_BigN(BigN *a)
+static inline void bign_free(bign *a)
 {
     if (!a)
         return;
@@ -188,43 +182,41 @@ static inline void free_BigN(BigN *a)
     kfree(a);
 }
 
-// static inline void fib_BigN(BigN *dest, int fn)
-// {
-//     // printk("_________");
-//     // printk("start fib %d", fn);
-//     resize_BigN(dest, 1);
-//     if (fn < 2) {
-//         dest->number[0] = fn;
-//         return;
-//     }
-
-//     BigN *a = alloc_BigN(1);
-//     BigN *b = alloc_BigN(1);
-
-//     a->number[0] = 0;
-//     b->number[0] = 1;
-
-//     for (int i = 2; i <= fn; i++) {
-//         add_BigN(a, b, dest);
-//         cpy_BigN(dest, a);
-//         swap_BigN(a, b);
-//     }
-
-//     free_BigN(a);
-//     free_BigN(b);
-// }
-
-static inline void fib_fast_BigN(BigN *dest, const int fn)
+static inline void bign_fib(bign *dest, int fn)
 {
-    resize_BigN(dest, 1);
+    bign_resize(dest, 1);
     if (fn < 2) {
         dest->number[0] = fn;
         return;
     }
 
-    BigN *a = alloc_BigN(1);
-    BigN *b = alloc_BigN(1);
-    BigN *tmp = alloc_BigN(1);
+    bign *a = bign_alloc(1);
+    bign *b = bign_alloc(1);
+
+    a->number[0] = 0;
+    b->number[0] = 1;
+
+    for (int i = 2; i <= fn; i++) {
+        bign_add(a, b, dest);
+        bign_cpy(dest, a);
+        bign_swap(a, b);
+    }
+
+    bign_free(a);
+    bign_free(b);
+}
+
+static inline void bign_fib_fast(bign *dest, const int fn)
+{
+    bign_resize(dest, 1);
+    if (fn < 2) {
+        dest->number[0] = fn;
+        return;
+    }
+
+    bign *a = bign_alloc(1);
+    bign *b = bign_alloc(1);
+    bign *tmp = bign_alloc(1);
 
     a->number[0] = 0;
     b->number[0] = 1;
@@ -232,28 +224,28 @@ static inline void fib_fast_BigN(BigN *dest, const int fn)
     int fn_fls = __fls(fn);
     for (unsigned int d = 1U << fn_fls; d > 0; d >>= 1) {
         /* F(2k) */
-        cpy_BigN(b, dest);
-        shl_BigN(dest, 1);
-        sub_BigN(dest, a, dest);
-        mul_BigN(dest, a, dest);
+        bign_cpy(b, dest);
+        bign_shl(dest, 1);
+        bign_sub(dest, a, dest);
+        bign_mul(dest, a, dest);
         /* F(2k + 1) */
-        mul_BigN(a, a, tmp);
-        mul_BigN(b, b, a);
-        add_BigN(a, tmp, tmp);
-
-        cpy_BigN(dest, a);
-        cpy_BigN(tmp, b);
+        bign_mul(a, a, tmp);
+        bign_mul(b, b, a);
+        bign_add(a, tmp, tmp);
+        bign_cpy(dest, a);
+        bign_cpy(tmp, b);
 
         if (!!(d & fn)) {
-            add_BigN(a, b, a);
-            swap_BigN(a, b);
-            cpy_BigN(a, dest);
+            bign_add(a, b, a);
+            bign_swap(a, b);
+            bign_cpy(a, dest);
             // printk("bit 1 string a = %s, string b = %s, string dest =
-            // %s",to_string_BigN(a), to_string_BigN(b), to_string_BigN(dest));
+            // %s",bign_to_string(a), bign_to_string(b), bign_to_string(dest));
         }
-        // printk("string dest = %s", to_string_BigN(dest));
+        // printk("string dest = %s", bign_to_string(dest));
     }
-    free_BigN(a);
-    free_BigN(b);
-    free_BigN(tmp);
+
+    bign_free(a);
+    bign_free(b);
+    bign_free(tmp);
 }

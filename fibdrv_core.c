@@ -23,6 +23,7 @@ MODULE_VERSION("0.1");
 #define MAX_LENGTH 1000
 
 static dev_t fib_dev = 0;
+
 static struct cdev *fib_cdev;
 static struct class *fib_class;
 static DEFINE_MUTEX(fib_mutex);
@@ -57,39 +58,63 @@ static ssize_t fib_read(struct file *file,
                         size_t size,
                         loff_t *offset)
 {
-    BigN *f = alloc_BigN(1);
-    // fib_BigN(f, *offset);
-    fib_fast_BigN(f, *offset);
-    char *c = to_string_BigN(f);
-    free_BigN(f);
+    /* start measure execution time*/
+
+    bign *f = bign_alloc(1);
+    bign_fib_fast(f, *offset);
+    char *c = bign_to_string(f);
+    bign_free(f);
     ssize_t size_c = strlen(c);
     if (copy_to_user(buf, c, size_c))
         return -EFAULT;
     kfree(c);
+    /* end measure execution time*/
 
-    // BigN *a = alloc_BigN(2);
-    // BigN *b = alloc_BigN(2);
-    // BigN *tmp = alloc_BigN(1);
+    // bign *a = alloc_bign(2);
+    // bign *b = alloc_bign(2);
+    // bign *tmp = alloc_bign(1);
     // a->number[0] = 0xffffffff;
     // b->number[0] = 0x80000000;
     //  /* test sub*/
-    // // sub_BigN(a, b, tmp);
+    // // sub_bign(a, b, tmp);
     //  /* test mul */
-    // mul_BigN(a, a, tmp);
-    // printk("mul result = %s", to_string_BigN(tmp));
-    // free_BigN(a);
-    // free_BigN(b);
+    // mul_bign(a, a, tmp);
+    // printk("mul result = %s", to_string_bign(tmp));
+    // free_bign(a);
+    // free_bign(b);
 
     return (ssize_t) size_c;
 }
 
-/* write operation is skipped */
+/* measure performance */
 static ssize_t fib_write(struct file *file,
                          const char *buf,
                          size_t size,
                          loff_t *offset)
 {
-    return 1;
+    ktime_t kt;
+    bign *f = bign_alloc(1);
+    switch (size) {
+    case 0:
+        kt = ktime_get();
+        bign_fib(f, *offset);
+        kt = ktime_sub(ktime_get(), kt);
+        break;
+    case 1:
+        kt = ktime_get();
+        bign_fib_fast(f, *offset);
+        kt = ktime_sub(ktime_get(), kt);
+        break;
+    default:
+        kt = ktime_get();
+        bign_fib(f, *offset);
+        kt = ktime_sub(ktime_get(), kt);
+        break;
+    }
+    bign_free(f);
+    /* end measure execution time*/
+
+    return ktime_to_ns(kt);
 }
 
 static loff_t fib_device_lseek(struct file *file, loff_t offset, int orig)
