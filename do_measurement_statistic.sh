@@ -11,9 +11,9 @@ sudo bash -c "echo 1 > /sys/devices/system/cpu/intel_pstate/no_turbo"
 make all    
 make unload
 make load
-rm -f plot_input
-sudo taskset -c 7 ./performance > plot_input
-gnuplot plot.gp
+rm -f plot_statistic_input
+sudo taskset -c 7 ./performance_statistic > plot_statistic_input
+gnuplot plot_statistic.gp
 make unload
 
 # restore the original system settings

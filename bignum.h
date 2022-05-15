@@ -44,7 +44,7 @@ static inline void bign_cpy(bign *a, bign *b);
 /* resize a->size and reallocate a->number */
 static inline void bign_resize(bign *a, size_t size);
 
-// /* calculate fib number without fast doubling */
+/* calculate fib number without fast doubling */
 static inline void bign_fib(bign *dest, int fn);
 
 /* calculate fib number with fast doubling */
@@ -56,7 +56,8 @@ static inline void bign_free(bign *a);
 /* swap bign a b */
 static inline void bign_swap(bign *a, bign *b);
 
-void bign_do_add(bign *a, bign *b, bign *c);
+// /* add carry into a bign_mul_add*/
+// void bign_mul_add(unsigned long long c, int offset, bign *a);
 
 
 #endif

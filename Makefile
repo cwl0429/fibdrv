@@ -11,7 +11,7 @@ GIT_HOOKS := .git/hooks/applied
 
 $(TARGET_MODULE)-objs := fibdrv_core.o bignum.o
 
-all: $(GIT_HOOKS) client performance
+all: $(GIT_HOOKS) client performance performance_statistic
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
 
 $(GIT_HOOKS):
@@ -20,7 +20,7 @@ $(GIT_HOOKS):
 
 clean:
 	$(MAKE) -C $(KDIR) M=$(PWD) clean
-	$(RM) client out performance perf
+	$(RM) client out performance perf performance_statistic 
 load:
 	sudo insmod $(TARGET_MODULE).ko
 unload:
@@ -31,6 +31,10 @@ client: client.c
 
 performance: performance.c
 	$(CC) -o $@ $^
+
+performance_statistic: performance_statistic.c
+	$(CC) -o $@ $^ -lm
+
 
 PRINTF = env printf
 PASS_COLOR = \e[32;01m

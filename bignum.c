@@ -85,17 +85,28 @@ static inline void bign_sub(bign *a, bign *b, bign *c)
         bign_resize(c, c->size - 1);
 }
 
+static inline void bign_mul_add(unsigned long long c, int offset, bign *a)
+{
+    for (int i = offset; i < a->size; i++) {
+        unsigned int carry;
+        carry = (c & 0xffffffff) + a->number[i];
+        a->number[i] = carry;
+        c >>= 32;
+        if (!c)
+            return;
+    }
+}
+
 static inline void bign_mul(bign *a, bign *b, bign *c)
 {
+    /* prevent a == c or b == c */
     bign *a_tmp = bign_alloc(1);
     bign_cpy(a, a_tmp);
-
+    /* handle multiplier or multiplicand are zero */
     if ((!a->number[0] && (a->size == 1)) ||
         (!b->number[0] && (b->size == 1))) {
-        /* prevent a == c or b == c */
         bign_resize(c, 1);
         c->number[0] = 0;
-        // printk("0 appear");
         return;
     }
 
@@ -107,16 +118,11 @@ static inline void bign_mul(bign *a, bign *b, bign *c)
     for (int i = 0; i < b->size; i++) {
         if (!b->number[i])
             continue;
-        unsigned int clz = __fls(b->number[i]) + 1;
-        unsigned int shift_cnt = 32 - clz;
-        for (unsigned int d = 1U; clz; d <<= 1) {
-            if (!!(d & b->number[i])) {
-                bign_add(c, a_tmp, c);
-            }
-            bign_shl(a_tmp, 1);
-            clz--;
+        for (int j = 0; j < a_tmp->size; j++) {
+            unsigned long long carry;
+            carry = (unsigned long long) a_tmp->number[j] * b->number[i];
+            bign_mul_add(carry, i + j, c);
         }
-        bign_shl(a_tmp, shift_cnt);
     }
     int c_size = 0;
     for (c_size = c->size - 1; !c->number[c_size];)
@@ -125,21 +131,12 @@ static inline void bign_mul(bign *a, bign *b, bign *c)
         bign_resize(c, c_size + 1);
 }
 
+
+
 static inline void bign_shl(bign *a, const int bits)
 {
     if (__builtin_clz(a->number[(a->size) - 1]) < bits)
         bign_resize(a, a->size + 1);
-    // for (int j = 0; j < bits; j++) {
-    //     for (int i = a->size - 2; i >= 0; i--) {
-    //         if (!a->number[i])
-    //             continue;
-    //         if (!!(a->number[i] & 0x80000000))
-    //             a->number[i + 1] += 1;
-    //         a->number[i] <<= 1;
-    //     }
-    // }
-    // if (!a->number[a->size - 1] && a->size > 1)
-    //     bign_resize(a, a->size - 1);
     for (int i = a->size - 1; i > 0; i--)
         a->number[i] = a->number[i] << bits | a->number[i - 1] >> (32 - bits);
     a->number[0] <<= bits;
